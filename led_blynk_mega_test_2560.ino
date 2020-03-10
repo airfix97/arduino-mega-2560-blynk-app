@@ -35,7 +35,8 @@
 /* Comment this out to disable prints and save space */
 #define BLYNK_PRINT Serial
 #include<RMCS2303drive.h>
-
+#include<Servo.h>
+Servo servo;
 RMCS2303 rmcs;                      //object for class RMCS2303
 
 byte slave_id=7;                    //Choose the slave id of connected drive.
@@ -49,6 +50,7 @@ int speed=8000;
 
 long int Current_position;
 long int Current_Speed;
+int brake=LOW;
 
 #include <ESP8266_Lib.h>
 #include <BlynkSimpleShieldEsp8266.h>
@@ -90,7 +92,7 @@ void setup()
 {
   // Debug console
   Serial.begin(9600);
-
+  servo.attach(2);
   // Set ESP8266 baud rate
   EspSerial.begin(ESP8266_BAUD);
   delay(10);
@@ -117,6 +119,22 @@ void loop()
 {
   Blynk.run();
   timer.run(); // Initiates BlynkTimer
+  if(brake==HIGH){
+    for (int pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
+    // in steps of 1 degree
+    servo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(15);                       // waits 15ms for the servo to reach the position
+  }
+  for (int pos = 180; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
+    servo.write(pos);              // tell servo to go to position in variable 'pos'
+    delay(15);
+    // waits 15ms for the servo to reach the position
+  }
+  brake=0;
+  }
+}
+BLYNK_WRITE(V0){
+  brake=param.asInt();
 }
 BLYNK_WRITE(V1){
   rmcs.Absolute_position(slave_id,-50000);
